@@ -1,0 +1,34 @@
+﻿<!doctype html><meta charset="utf-8"><title>客服小幫手</title>
+<div id="log" style="height:60vh;overflow:auto;border:1px solid #eee;padding:10px;font-family:system-ui"></div>
+<input id="q" placeholder="請輸入問題..." style="width:70%"><button id="go">送出</button>
+<div id="handoff" style="display:none;margin-top:10px">
+  <p>轉接業務，請留下聯絡方式：</p>
+  <input id="name" placeholder="姓名">
+  <input id="company" placeholder="公司">
+  <input id="email" placeholder="Email">
+  <button id="submit">送出</button>
+</div>
+<script>
+const log = document.getElementById('log');
+const add = (t,who='bot')=>{const d=document.createElement('div');d.textContent=(who==='you'?'你：':'客服：')+t;log.appendChild(d);log.scrollTop=log.scrollHeight;}
+const sid = crypto.randomUUID();
+const CHAT_URL = 'YOUR_N8N_CHAT_WEBHOOK';
+const HANDOFF_URL = 'YOUR_N8N_HANDOFF_WEBHOOK';
+document.getElementById('go').onclick = async ()=>{
+  const q = document.getElementById('q').value.trim(); if(!q) return;
+  add(q,'you'); document.getElementById('q').value='';
+  add('思考中⋯');
+  const r = await fetch(CHAT_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:sid,query:q})}).then(x=>x.json()).catch(()=>null);
+  log.lastChild.remove();
+  if(!r){ add('系統暫時無法回應，稍後再試或留下聯絡資訊。'); document.getElementById('handoff').style.display='block'; return;}
+  add(r.answer || '（沒有內容）');
+  if(r.handoff){ document.getElementById('handoff').style.display='block'; }
+};
+document.getElementById('submit').onclick = async ()=>{
+  const payload = {sessionId:sid,name:ho('name'),company:ho('company'),email:ho('email')};
+  const ok = await fetch(HANDOFF_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(r=>r.ok).catch(()=>false);
+  add(ok?'已送交，我們將盡快聯繫您。':'送交失敗，請稍後再試。');
+  if(ok) document.getElementById('handoff').style.display='none';
+};
+function ho(id){return document.getElementById(id).value.trim();}
+</script>
