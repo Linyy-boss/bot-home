@@ -195,13 +195,15 @@
         company: document.getElementById('ho-company').value.trim(),
         email: document.getElementById('ho-email').value.trim()
       };
-      const ok = await fetch(HANDOFF_URL,{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(payload)
-      }).then(r=>r.ok).catch(()=>false);
-      addMsg(ok ? '已送交，我們的業務將盡快聯繫您。' : '送交失敗，請稍後再試。','bot');
-      if(ok) handoff.style.display='none';
+      const res = await fetch(HANDOFF_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams(payload)
+  }).catch(() => null);
+
+  const ok = !!(res && res.ok);
+  addMsg(ok ? '已送交，我們的業務將盡快聯繫您。' : '送交失敗，請稍後再試。', 'bot');
+  if (ok) document.getElementById('handoff').style.display = 'none';
     };
 
     // 頁面開啟預設問候
